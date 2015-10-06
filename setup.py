@@ -9,7 +9,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.kvcache',
-    version='0.1.2',
+    version='0.1.3',
     description='Key/Value cache of The SCORE Framework',
     long_description=README,
     author='strg.at',
@@ -17,6 +17,7 @@ setup(
     url='http://strg.at',
     keywords='web wsgi caching',
     packages=['score.kvcache'],
+    namespace_packages=['score'],
     license='LGPL',
     classifiers=[
         'Development Status :: 4 - Beta',
