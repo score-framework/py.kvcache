@@ -111,8 +111,8 @@ class FileCache(Backend):
             cursor = conn.cursor()
             cursor.execute('INSERT OR REPLACE INTO kvcache (container, key, '
                            'value, expire) VALUES (?, ?, ?, ?)',
-                           (container, key, pickle.dumps(value), time.time()
-                            + expire))
+                           (container, key, pickle.dumps(value),
+                            time.time() + expire))
             conn.commit()
         except sqlite3.OperationalError:
             cursor.execute('CREATE TABLE IF NOT EXISTS kvcache ('
@@ -136,10 +136,10 @@ class SQLAlchemyCache(Backend):
     """
 
     def __init__(self, **confdict):
-        from sqlalchemy import (
-            Column, String, Integer, Binary, engine_from_config)
+        from sqlalchemy import Column, String, Integer, Binary
         from sqlalchemy.ext.declarative import declarative_base
         from sqlalchemy.orm import sessionmaker
+        from score.db import engine_from_config
         engine = engine_from_config(confdict)
         self.Session = sessionmaker(bind=engine)
         Base = declarative_base()
