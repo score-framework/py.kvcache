@@ -154,6 +154,7 @@ class SQLAlchemyCache(Backend):
         Base.metadata.create_all()
 
     def store(self, container, key, value, expire=None):
+        key = str(key)
         if expire is None:
             expire = 10**6
         session = self.Session()
@@ -175,6 +176,7 @@ class SQLAlchemyCache(Backend):
         session.commit()
 
     def retrieve(self, container, key):
+        key = str(key)
         session = self.Session()
         cls = self.kvcache_cls
         entry = session.query(cls).\
