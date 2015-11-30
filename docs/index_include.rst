@@ -10,11 +10,11 @@ Introduction
 ============
 
 This module allows storing python objects in key-value storages. It can
-be used for caching frequently used data to avoid calling APIs too often or
-to avoid exceeding the number of allowed calls to a service. It should not be
-used to persist data since it cannot guarantee that data is retained, even
-if the specified expiration is not reached. Where and how long the data is
-stored depends on the configurable implementations.
+be used, for example, to cache frequently used data to avoid calling APIs
+too often or to avoid exceeding the number of allowed calls to a service. It
+should not be used to persist data, since it cannot guarantee that data is
+retained, even if the specified expiration is not reached. Where and how long
+the data is stored depends on the configurable backend.
 
 How it works
 ============
@@ -26,7 +26,7 @@ configured or registered with the container. The cache container will invoke
 this cache value generator to obtain the matching cache value for the
 requested key.
 
-If you want to configure your generator have a look at the
+If you want to configure your generator, have a look at the
 :ref:`Configuration <kvcache_configuration>`. The registration of a
 :term:`cache value generator` can be done by calling the container's
 :meth:`ConfiguredKvCacheModule.register_generator` method:
