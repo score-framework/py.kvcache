@@ -154,39 +154,53 @@ class SQLAlchemyCache(Backend):
         Base.metadata.create_all()
 
     def store(self, container, key, value, expire=None):
-        key = str(key)
-        if expire is None:
-            expire = 10**6
-        session = self.Session()
-        cls = self.kvcache_cls
-        entry = session.query(cls).\
-            filter(cls.container == container).\
-            filter(cls.key == key).\
-            first()
-        if not entry:
-            entry = cls(container=container,
-                        key=key,
-                        value=pickle.dumps(value),
-                        expire=time.time() + expire)
-            session.add(entry)
-            session.commit()
-            return
-        entry.value = pickle.dumps(value)
-        entry.expire = time.time() + expire
-        session.commit()
+        try:
+            key = str(key)
+            if expire is None:
+                expire = 10**6
+            session = self.Session()
+            cls = self.kvcache_cls
+            entry = session.query(cls).\
+                filter(cls.container == container).\
+                filter(cls.key == key).\
+                first()
+            if not entry:
+                entry = cls(container=container,
+                            key=key,
+                            value=pickle.dumps(value),
+                            expire=time.time() + expire)
+                session.add(entry)
+                return
+            entry.value = pickle.dumps(value)
+            entry.expire = time.time() + expire
+        except:
+            session.rollback()
+            session = None
+            raise
+        finally:
+            if session:
+                session.commit()
 
     def retrieve(self, container, key):
-        key = str(key)
-        session = self.Session()
-        cls = self.kvcache_cls
-        entry = session.query(cls).\
-            filter(cls.container == container).\
-            filter(cls.key == key).\
-            filter(cls.expire > time.time()).\
-            first()
-        if not entry:
-            raise NotFound()
-        return pickle.loads(entry.value)
+        try:
+            key = str(key)
+            session = self.Session()
+            cls = self.kvcache_cls
+            entry = session.query(cls).\
+                filter(cls.container == container).\
+                filter(cls.key == key).\
+                filter(cls.expire > time.time()).\
+                first()
+            if not entry:
+                raise NotFound()
+            return pickle.loads(entry.value)
+        except:
+            session.rollback()
+            session = None
+            raise
+        finally:
+            if session:
+                session.commit()
 
     def invalidate(self, container, key):
         self.store(container, key, None)
