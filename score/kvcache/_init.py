@@ -24,8 +24,8 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-from score.init import init_object, extract_conf, parse_time_interval, \
-    ConfiguredModule
+from score.init import parse_object, extract_conf, parse_time_interval, \
+    ConfiguredModule, parse_dotted_path
 import logging
 from ._container import NotFound
 
@@ -42,19 +42,20 @@ class ContainerAlreadyConfigured(Exception):
 
 def init(confdict):
     """
-    Initializes this module acoording to :ref:`our module initialization
+    Initializes this module according to :ref:`our module initialization
     guidelines <module_initialization>` with the following configuration keys:
 
     :confkey:`container`
         The cache container configuration. A container defines a name,
-        a backend and optionally an expire. The configuration key for a
-        container starts with ``container`` followed by the name and the
-        configuration keys for the container.
+        a backend and optionally a generator and an expire. The configuration
+        key for a container starts with ``container`` followed by the name
+        and the configuration keys for the container.
 
         For example, the following configuration::
 
             container.greeter.backend = score.kvcache.backend.FileCache
             container.greeter.backend.path = /tmp/greeter.sqlite3
+            container.greeter.generator = dotted.path.to.greeting_generator
             container.greeter.expire = 1m
 
         The Backend config will be passed to
@@ -62,19 +63,20 @@ def init(confdict):
         backend's constructor parameters for further information about
         the backend's configurable keys.
 
-    :confkey:`backend`
         To make life easier for a huge set of container configurations, we serve
-        the possibililty to configure backend aliases that will replace the
+        the possibility to configure backend aliases that will replace the
         container's backend config if the name matches.
 
         For example::
 
-            backend.myfilecache = score.kvcache.backend.FileCache
-            backend.myfilecache.path = /tmp/filecache.sqlite3
-            container.greeter.backend = myfilecache
+            backend.example_filecache = score.kvcache.backend.FileCache
+            backend.example_filecache.path = /tmp/filecache.sqlite3
+            container.greeter.backend = example_filecache
+            container.greeter.generator = dotted.path.to.greeting_generator
             container.greeter.expire = 1m
-            container.anothergreeter.backend = myfilecache
-            container.anothergreeter.expire = 30 seconds
+            container.counter.backend = example_filecache
+            container.counter.generator = dotted.path.to.counting_generator
+            container.counter.expire = 30 seconds
 
     """
     containers = {}
@@ -88,13 +90,18 @@ def init(confdict):
             for k, v in alias_conf.items():
                 confdict.update({'%s%s' % (backend_key, k): v})
         container_name = container_conf[:-len('.backend')]
-        backend = init_object(confdict, backend_key)
+        backend = parse_object(confdict, backend_key)
+        generator_key = 'container.%s.generator' % container_name
+        generator = None
+        if generator_key in confdict:
+            generator = parse_dotted_path(confdict[generator_key])
         expire_key = 'container.%s.expire' % container_name
         expire = None
         if expire_key in confdict:
             expire = parse_time_interval(confdict[expire_key])
         containers[container_name] = CacheContainer(container_name, backend,
-                                                    expire)
+                                                    generator=generator,
+                                                    expire=expire)
     return ConfiguredKvCacheModule(containers)
 
 
@@ -118,7 +125,6 @@ class ConfiguredKvCacheModule(ConfiguredModule):
         """
         Registers the generator to call if the cache is invalid.
         """
-        assert not self._finalized
         if container not in self.containers:
             log.warn('Cache container "%s" not configured, using default.' %
                      container)
@@ -133,7 +139,6 @@ class ConfiguredKvCacheModule(ConfiguredModule):
         dictionary. Will raise a :class:`ContainerAlreadyConfigured` if
         *exist_ok=False* and the container is already configured.
         """
-        assert not self._finalized
         if exist_ok is False and container in self.containers:
             raise ContainerAlreadyConfigured(container)
         from score.kvcache.backend import VariableCache
@@ -145,11 +150,11 @@ class CacheContainer:
     A cache container to wrap key-value pairs.
     """
 
-    def __init__(self, name, backend, expire=None):
+    def __init__(self, name, backend, generator=None, expire=None):
         self.name = name
         self.backend = backend
+        self.generator = generator
         self.expire = expire
-        self.generator = None
 
     def __delitem__(self, key):
         """
