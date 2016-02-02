@@ -16,7 +16,7 @@ setup(
     author_email='support@strg.at',
     url='http://strg.at',
     keywords='web wsgi caching',
-    packages=['score.kvcache'],
+    packages=['score', 'score.kvcache'],
     namespace_packages=['score'],
     license='LGPL',
     classifiers=[
