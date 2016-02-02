@@ -24,7 +24,46 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-from ._init import init, ConfiguredKvCacheModule
-from ._container import CacheContainer, NotFound
 
-__all__ = ('init', 'ConfiguredKvCacheModule', 'CacheContainer', 'NotFound')
+class CacheContainer:
+    """
+    A cache container to wrap key-value pairs.
+    """
+
+    def __init__(self, name, backend, expire=None):
+        self.name = name
+        self.backend = backend
+        self.expire = expire
+        self.generator = None
+
+    def __delitem__(self, key):
+        """
+        Invalidates a value for given key.
+        """
+        self.backend.invalidate(self.name, key)
+
+    def __setitem__(self, key, value):
+        """
+        Explicitly sets a value for given key ignoring validity.
+        """
+        self.backend.store(self.name, key, value, self.expire)
+
+    def __getitem__(self, key):
+        """
+        Gets a value for given key and takes care of not found cache items.
+        """
+        try:
+            value = self.backend.retrieve(self.name, key)
+        except NotFound:
+            if self.generator is None:
+                raise
+            value = self.generator(key)
+            self[key] = value
+        return value
+
+
+class NotFound(Exception):
+    """
+    Thrown if cache is invalid (either expired or not available).
+    """
+    pass
