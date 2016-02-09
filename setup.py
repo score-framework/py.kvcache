@@ -9,7 +9,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.kvcache',
-    version='0.1.8',
+    version='0.2',
     description='Key/Value cache of The SCORE Framework',
     long_description=README,
     author='strg.at',
@@ -36,6 +36,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'score.init >= 0.1',
+        'score.init >= 0.3.1',
     ],
 )
