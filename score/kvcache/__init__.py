@@ -24,7 +24,8 @@
 # the discretion of STRG.AT GmbH also the competent court, in whose district the
 # Licensee has his registered seat, an establishment or assets.
 
-from ._init import init, ConfiguredKvCacheModule
+from ._init import init, ConfiguredKvCacheModule, ContainerAlreadyConfigured
 from ._container import CacheContainer, NotFound
 
-__all__ = ('init', 'ConfiguredKvCacheModule', 'CacheContainer', 'NotFound')
+__all__ = ('init', 'ConfiguredKvCacheModule', 'ContainerAlreadyConfigured',
+           'CacheContainer', 'NotFound')
