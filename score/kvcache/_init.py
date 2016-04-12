@@ -168,6 +168,16 @@ class CacheContainer:
         """
         self.backend.store(self.name, key, value, self.expire)
 
+    def __contains__(self, key):
+        """
+        Checks if a given *key* exists in this container.
+        """
+        try:
+            self.backend.retrieve(self.name, key)
+            return True
+        except NotFound:
+            return False
+
     def __getitem__(self, key):
         """
         Gets a value for given key and takes care of not found cache items.
