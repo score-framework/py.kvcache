@@ -106,9 +106,9 @@ class FileCache(Backend):
     def store(self, container, key, value, expire=None):
         if expire is None:
             expire = 10**6
+        conn = sqlite3.connect(self.path)
+        cursor = conn.cursor()
         try:
-            conn = sqlite3.connect(self.path)
-            cursor = conn.cursor()
             cursor.execute('INSERT OR REPLACE INTO kvcache (container, key, '
                            'value, expire) VALUES (?, ?, ?, ?)',
                            (container, key, pickle.dumps(value),
